@@ -1,0 +1,32 @@
+{
+  "name": "auth-api",
+  "version": "1.0.0",
+  "description": "User Authentication API with JWT, bcrypt, and Role-Based Access Control",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed:admin": "node scripts/seedAdmin.js"
+  },
+  "keywords": [
+    "auth",
+    "jwt",
+    "express",
+    "mongoose",
+    "bcrypt",
+    "rbac"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}

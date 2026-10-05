@@ -18,6 +18,7 @@
 - Giữ response lỗi thống nhất: `{ "message", "error", "statusCode" }`.
 - Không cho client tự truyền role `admin` khi đăng ký.
 - Không thêm các tính năng ngoài phạm vi như refresh token, OAuth, email verification, token blacklist, hoặc CRUD người dùng.
+- Không tự thực hiện các lệnh push, pull, merge hay các lệnh làm ảnh hưởng đến repo dự án. Chỉ gợi ý các lệnh này để người dùng tự thực hiện nếu cần thiết
 
 ## Quy tắc chung (áp dụng cho tất cả projects)
 - Mỗi project phải có repository riêng trên GitHub
