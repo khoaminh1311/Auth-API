@@ -28,6 +28,7 @@ const config = {
     email: process.env.ADMIN_EMAIL,
     password: process.env.ADMIN_PASSWORD,
   },
+  corsOrigin: process.env.CORS_ORIGIN || '*',
 };
 
 module.exports = config;
