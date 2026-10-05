@@ -95,7 +95,21 @@ const login = catchAsync(async (req, res, next) => {
   });
 });
 
+/**
+ * @route   GET /api/auth/me
+ * @desc    Lấy thông tin người dùng hiện tại
+ * @access  Protected (authMiddleware)
+ */
+const getMe = (req, res) => {
+  // req.user đã được authMiddleware gắn sẵn (safe object)
+  res.status(200).json({
+    message: 'Lấy thông tin người dùng thành công',
+    user: req.user,
+  });
+};
+
 module.exports = {
   register,
   login,
+  getMe,
 };
