@@ -108,8 +108,70 @@ const getMe = (req, res) => {
   });
 };
 
+/**
+ * @route   PUT /api/auth/change-password
+ * @desc    Đổi mật khẩu cho người dùng hiện tại
+ * @access  Protected (authMiddleware)
+ */
+const changePassword = catchAsync(async (req, res, next) => {
+  const { currentPassword, newPassword } = req.body || {};
+
+  // 1. Kiểm tra đầu vào bắt buộc
+  if (!currentPassword || !newPassword) {
+    return next(new AppError('Vui lòng cung cấp mật khẩu hiện tại và mật khẩu mới', 400, 'Bad Request'));
+  }
+
+  // 2. Kiểm tra độ dài mật khẩu mới
+  if (typeof newPassword !== 'string' || newPassword.length < 8) {
+    return next(new AppError('Mật khẩu mới phải có độ dài tối thiểu 8 ký tự', 400, 'Bad Request'));
+  }
+
+  if (newPassword.length > 128) {
+    return next(new AppError('Mật khẩu không được vượt quá 128 ký tự', 400, 'Bad Request'));
+  }
+
+  // 3. Lấy thông tin user cùng với mật khẩu đã băm
+  const user = await User.findById(req.user.id).select('+password');
+
+  if (!user) {
+    return next(new AppError('Tài khoản người dùng không còn tồn tại', 401, 'Unauthorized'));
+  }
+
+  // 4. Kiểm tra mật khẩu hiện tại
+  if (!(await user.comparePassword(currentPassword))) {
+    return next(new AppError('Mật khẩu hiện tại không đúng', 401, 'Unauthorized'));
+  }
+
+  // 5. Kiểm tra mật khẩu mới không được trùng mật khẩu hiện tại
+  if (await user.comparePassword(newPassword)) {
+    return next(new AppError('Mật khẩu mới không được trùng với mật khẩu hiện tại', 400, 'Bad Request'));
+  }
+
+  // 6. Cập nhật mật khẩu mới (pre-save hook sẽ tự động băm và set passwordChangedAt)
+  user.password = newPassword;
+  await user.save();
+
+  // 7. Trả về thông báo thành công theo API contract
+  res.status(200).json({
+    message: 'Đổi mật khẩu thành công. Vui lòng đăng nhập lại với mật khẩu mới',
+  });
+});
+
+/**
+ * @route   POST /api/auth/logout
+ * @desc    Đăng xuất người dùng (Stateless JWT - hướng dẫn client xóa token)
+ * @access  Protected (authMiddleware)
+ */
+const logout = (req, res) => {
+  res.status(200).json({
+    message: 'Đăng xuất thành công. Vui lòng xóa token phía client',
+  });
+};
+
 module.exports = {
   register,
   login,
   getMe,
+  changePassword,
+  logout,
 };

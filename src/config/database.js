@@ -10,10 +10,10 @@ if (process.platform === 'win32') {
     try {
       const { execSync } = require('child_process');
       const output = execSync(
-        'powershell -NoProfile -Command "(Get-NetIPConfiguration | Where-Object { $_.IPv4DefaultGateway -ne $null }).DNSServer.ServerAddresses -join \',\'"',
+        'powershell -NoProfile -Command "Get-DnsClientServerAddress -AddressFamily IPv4 | Select-Object -ExpandProperty ServerAddresses"',
         { encoding: 'utf8', timeout: 3000 }
       ).trim();
-      const windowsDnsServers = output.split(',').map(s => s.trim()).filter(Boolean);
+      const windowsDnsServers = output.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
       if (windowsDnsServers.length > 0) {
         dns.setServers(windowsDnsServers);
       }
