@@ -6,7 +6,7 @@ if (process.platform === 'win32') {
   const currentServers = dns.getServers();
   if (currentServers.length === 1 && currentServers[0] === '127.0.0.1') {
     try {
-      dns.setServers(['10.20.50.54', '8.8.8.8', '1.1.1.1']);
+      dns.setServers(['8.8.8.8', '1.1.1.1']);
     } catch {
       // Bỏ qua nếu không thể đặt servers
     }

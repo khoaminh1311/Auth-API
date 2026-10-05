@@ -9,6 +9,8 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10kb' }));
 
+const authRoutes = require('./routes/authRoutes');
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -18,8 +20,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Placeholder for auth routes (will mount in subsequent phases)
-// app.use('/api/auth', authRoutes);
+// Authentication routes
+app.use('/api/auth', authRoutes);
 
 // Unhandled routes -> 404 Not Found
 app.all('*', (req, res, next) => {
