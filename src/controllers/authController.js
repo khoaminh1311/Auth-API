@@ -1,9 +1,6 @@
-const User = require('../models/userModel');
+const authService = require('../services/authService');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-const { generateToken } = require('../utils/jwt');
-const { formatSafeUser } = require('../utils/userResponse');
-const config = require('../config/env');
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -13,9 +10,9 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * @access  Public
  */
 const register = catchAsync(async (req, res, next) => {
-  const { name, email, password } = req.body;
+  const { name, email, password } = req.body || {};
 
-  // 1. Validation đầu vào
+  // 1. Validation cú pháp đầu vào tầng HTTP
   if (!name || typeof name !== 'string' || name.trim().length < 2) {
     return next(new AppError('Họ và tên là bắt buộc và phải có ít nhất 2 ký tự', 400, 'Bad Request'));
   }
@@ -36,27 +33,13 @@ const register = catchAsync(async (req, res, next) => {
     return next(new AppError('Mật khẩu không được vượt quá 128 ký tự', 400, 'Bad Request'));
   }
 
-  const normalizedEmail = email.toLowerCase().trim();
-  const trimmedName = name.trim();
+  // 2. Gọi service xử lý nghiệp vụ
+  const user = await authService.registerUser({ name, email, password });
 
-  // 2. Kiểm tra email đã tồn tại hay chưa
-  const existingUser = await User.findOne({ email: normalizedEmail });
-  if (existingUser) {
-    return next(new AppError('Email đã được sử dụng', 409, 'Conflict'));
-  }
-
-  // 3. Tạo user mới (Bỏ qua bất kỳ trường role nào client gửi lên, luôn gán 'user')
-  const newUser = await User.create({
-    name: trimmedName,
-    email: normalizedEmail,
-    password,
-    role: 'user',
-  });
-
-  // 4. Trả về phản hồi an toàn
+  // 3. Trả về phản hồi HTTP
   res.status(201).json({
     message: 'Đăng ký tài khoản thành công',
-    user: formatSafeUser(newUser),
+    user,
   });
 });
 
@@ -66,32 +49,20 @@ const register = catchAsync(async (req, res, next) => {
  * @access  Public
  */
 const login = catchAsync(async (req, res, next) => {
-  const { email, password } = req.body;
+  const { email, password } = req.body || {};
 
-  // 1. Validation đầu vào
+  // 1. Validation cú pháp đầu vào tầng HTTP
   if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
     return next(new AppError('Vui lòng cung cấp đầy đủ email và mật khẩu', 400, 'Bad Request'));
   }
 
-  const normalizedEmail = email.toLowerCase().trim();
+  // 2. Gọi service xử lý đăng nhập & cấp token
+  const result = await authService.loginUser({ email, password });
 
-  // 2. Tìm user theo email (lấy kèm trường password)
-  const user = await User.findOne({ email: normalizedEmail }).select('+password');
-
-  // 3. So sánh password (Dùng thông điệp chung để chống user enumeration)
-  if (!user || !(await user.comparePassword(password))) {
-    return next(new AppError('Email hoặc mật khẩu không đúng', 401, 'Unauthorized'));
-  }
-
-  // 4. Tạo JWT token
-  const token = generateToken(user._id);
-
-  // 5. Trả về thông tin đăng nhập thành công
+  // 3. Trả về phản hồi HTTP
   res.status(200).json({
     message: 'Đăng nhập thành công',
-    user: formatSafeUser(user),
-    token,
-    expiresIn: config.jwt.expiresIn,
+    ...result,
   });
 });
 
@@ -116,12 +87,11 @@ const getMe = (req, res) => {
 const changePassword = catchAsync(async (req, res, next) => {
   const { currentPassword, newPassword } = req.body || {};
 
-  // 1. Kiểm tra đầu vào bắt buộc
+  // 1. Validation cú pháp đầu vào tầng HTTP
   if (!currentPassword || !newPassword) {
     return next(new AppError('Vui lòng cung cấp mật khẩu hiện tại và mật khẩu mới', 400, 'Bad Request'));
   }
 
-  // 2. Kiểm tra độ dài mật khẩu mới
   if (typeof newPassword !== 'string' || newPassword.length < 8) {
     return next(new AppError('Mật khẩu mới phải có độ dài tối thiểu 8 ký tự', 400, 'Bad Request'));
   }
@@ -130,28 +100,14 @@ const changePassword = catchAsync(async (req, res, next) => {
     return next(new AppError('Mật khẩu không được vượt quá 128 ký tự', 400, 'Bad Request'));
   }
 
-  // 3. Lấy thông tin user cùng với mật khẩu đã băm
-  const user = await User.findById(req.user.id).select('+password');
+  // 2. Gọi service thực hiện đổi mật khẩu
+  await authService.changeUserPassword({
+    userId: req.user.id,
+    currentPassword,
+    newPassword,
+  });
 
-  if (!user) {
-    return next(new AppError('Tài khoản người dùng không còn tồn tại', 401, 'Unauthorized'));
-  }
-
-  // 4. Kiểm tra mật khẩu hiện tại
-  if (!(await user.comparePassword(currentPassword))) {
-    return next(new AppError('Mật khẩu hiện tại không đúng', 401, 'Unauthorized'));
-  }
-
-  // 5. Kiểm tra mật khẩu mới không được trùng mật khẩu hiện tại
-  if (await user.comparePassword(newPassword)) {
-    return next(new AppError('Mật khẩu mới không được trùng với mật khẩu hiện tại', 400, 'Bad Request'));
-  }
-
-  // 6. Cập nhật mật khẩu mới (pre-save hook sẽ tự động băm và set passwordChangedAt)
-  user.password = newPassword;
-  await user.save();
-
-  // 7. Trả về thông báo thành công theo API contract
+  // 3. Trả về phản hồi HTTP
   res.status(200).json({
     message: 'Đổi mật khẩu thành công. Vui lòng đăng nhập lại với mật khẩu mới',
   });
