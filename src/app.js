@@ -1,12 +1,16 @@
 const express = require('express');
 const cors = require('cors');
+const config = require('./config/env');
 const AppError = require('./utils/appError');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
+// Hardening: Ẩn thông tin framework Express khỏi header HTTP
+app.disable('x-powered-by');
+
 // Middlewares
-app.use(cors());
+app.use(cors({ origin: config.corsOrigin }));
 app.use(express.json({ limit: '10kb' }));
 
 const authRoutes = require('./routes/authRoutes');
