@@ -2,13 +2,23 @@ const mongoose = require('mongoose');
 const dns = require('dns');
 
 // Khắc phục lỗi Node.js c-ares trên Windows khi dns.getServers() trả về ['127.0.0.1']
+// c-ares không đọc được DNS adapter từ Windows, dẫn đến ECONNREFUSED khi resolve SRV record MongoDB Atlas
+// Giải pháp: tự động phát hiện DNS thực từ Windows adapter đang kết nối internet
 if (process.platform === 'win32') {
   const currentServers = dns.getServers();
   if (currentServers.length === 1 && currentServers[0] === '127.0.0.1') {
     try {
-      dns.setServers(['8.8.8.8', '1.1.1.1']);
+      const { execSync } = require('child_process');
+      const output = execSync(
+        'powershell -NoProfile -Command "(Get-NetIPConfiguration | Where-Object { $_.IPv4DefaultGateway -ne $null }).DNSServer.ServerAddresses -join \',\'"',
+        { encoding: 'utf8', timeout: 3000 }
+      ).trim();
+      const windowsDnsServers = output.split(',').map(s => s.trim()).filter(Boolean);
+      if (windowsDnsServers.length > 0) {
+        dns.setServers(windowsDnsServers);
+      }
     } catch {
-      // Bỏ qua nếu không thể đặt servers
+      // Bỏ qua nếu không thể phát hiện DNS — Mongoose sẽ thử kết nối với cấu hình hiện tại
     }
   }
 }
