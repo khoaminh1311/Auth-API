@@ -63,7 +63,7 @@ Mọi phản hồi lỗi từ API **bắt buộc** tuân thủ đúng cấu trú
    - Được chuẩn hóa tự động: chuyển toàn bộ về chữ thường (`lowercase`) và cắt khoảng trắng (`trimmed`).
 3. **`password`**:
    - Bắt buộc.
-   - Độ dài tối thiểu: 8 ký tự.
+   - Độ dài: từ 8 đến 128 ký tự.
    - Được băm bằng thuật toán `bcrypt` với cost factor (salt rounds) tối thiểu là `12` trước khi lưu vào cơ sở dữ liệu.
 4. **`currentPassword` / `newPassword`**:
    - Bắt buộc khi đổi mật khẩu.

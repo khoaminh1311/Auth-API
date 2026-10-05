@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Vui lòng cung cấp mật khẩu'],
       minlength: [8, 'Mật khẩu phải có độ dài tối thiểu 8 ký tự'],
+      maxlength: [128, 'Mật khẩu không được vượt quá 128 ký tự'],
       select: false, // Không trả về password trong các truy vấn mặc định
     },
     role: {
