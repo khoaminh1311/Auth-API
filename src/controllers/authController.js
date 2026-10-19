@@ -1,8 +1,7 @@
+const validator = require('validator');
 const authService = require('../services/authService');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * @route   POST /api/auth/register
@@ -21,11 +20,11 @@ const register = catchAsync(async (req, res, next) => {
     return next(new AppError('Họ và tên không được vượt quá 50 ký tự', 400, 'Bad Request'));
   }
 
-  if (!email || typeof email !== 'string' || !EMAIL_REGEX.test(email.trim())) {
+  if (!email || typeof email !== 'string' || !validator.isEmail(email.trim())) {
     return next(new AppError('Vui lòng cung cấp địa chỉ email hợp lệ', 400, 'Bad Request'));
   }
 
-  if (!password || typeof password !== 'string' || password.length < 8) {
+  if (!password || typeof password !== 'string' || password.length < 8 || password.trim().length === 0) {
     return next(new AppError('Mật khẩu phải có độ dài tối thiểu 8 ký tự', 400, 'Bad Request'));
   }
 
@@ -88,11 +87,11 @@ const changePassword = catchAsync(async (req, res, next) => {
   const { currentPassword, newPassword } = req.body || {};
 
   // 1. Validation cú pháp đầu vào tầng HTTP
-  if (!currentPassword || !newPassword) {
+  if (!currentPassword || !newPassword || typeof currentPassword !== 'string') {
     return next(new AppError('Vui lòng cung cấp mật khẩu hiện tại và mật khẩu mới', 400, 'Bad Request'));
   }
 
-  if (typeof newPassword !== 'string' || newPassword.length < 8) {
+  if (typeof newPassword !== 'string' || newPassword.length < 8 || newPassword.trim().length === 0) {
     return next(new AppError('Mật khẩu mới phải có độ dài tối thiểu 8 ký tự', 400, 'Bad Request'));
   }
 

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const validator = require('validator');
 const config = require('../config/env');
 
 const userSchema = new mongoose.Schema(
@@ -17,10 +18,7 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-        'Địa chỉ email không đúng định dạng',
-      ],
+      validate: [validator.isEmail, 'Địa chỉ email không đúng định dạng'],
     },
     password: {
       type: String,

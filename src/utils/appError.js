@@ -27,6 +27,9 @@ class AppError extends Error {
         case 422:
           this.error = 'Unprocessable Entity';
           break;
+        case 429:
+          this.error = 'Too Many Requests';
+          break;
         default:
           this.error = 'Internal Server Error';
       }
