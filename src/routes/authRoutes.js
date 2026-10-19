@@ -2,16 +2,17 @@ const express = require('express');
 const authController = require('../controllers/authController');
 const authMiddleware = require('../middleware/authMiddleware');
 const { authorizeRoles } = require('../middleware/roleMiddleware');
+const { authLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
 
-// Public routes
-router.post('/register', authController.register);
-router.post('/login', authController.login);
+// Public routes (Bảo vệ bằng Rate Limiter chống brute-force)
+router.post('/register', authLimiter, authController.register);
+router.post('/login', authLimiter, authController.login);
 
 // Protected routes (Tất cả người dùng đã đăng nhập)
 router.get('/me', authMiddleware, authController.getMe);
-router.put('/change-password', authMiddleware, authController.changePassword);
+router.put('/change-password', authLimiter, authMiddleware, authController.changePassword);
 router.post('/logout', authMiddleware, authController.logout);
 
 // RBAC Protected routes (Chỉ người dùng có role admin)

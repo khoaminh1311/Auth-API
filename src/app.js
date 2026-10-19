@@ -1,13 +1,14 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const config = require('./config/env');
 const AppError = require('./utils/appError');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
-// Hardening: Ẩn thông tin framework Express khỏi header HTTP
-app.disable('x-powered-by');
+// Hardening: Thiết lập các HTTP security headers chuẩn OWASP & ẩn X-Powered-By
+app.use(helmet());
 
 // Middlewares
 app.use(cors({ origin: config.corsOrigin }));

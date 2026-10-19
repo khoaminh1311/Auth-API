@@ -98,6 +98,9 @@ const errorHandler = (err, req, res, next) => {
       case 413:
         errorTitle = 'Payload Too Large';
         break;
+      case 429:
+        errorTitle = 'Too Many Requests';
+        break;
       case 503:
         errorTitle = 'Service Unavailable';
         break;
