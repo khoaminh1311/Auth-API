@@ -31,6 +31,7 @@ Tài liệu này xác định chi tiết hợp đồng API (API Contract) cho d�
 | **`403 Forbidden`** | Forbidden | Người dùng không đủ quyền truy cập (thiếu role yêu cầu) |
 | **`404 Not Found`** | Not Found | Route hoặc tài nguyên không tồn tại |
 | **`409 Conflict`** | Conflict | Trùng lặp dữ liệu độc nhất (ví dụ: email đã được đăng ký) |
+| **`429 Too Many Requests`** | Too Many Requests | Vượt quá giới hạn số lượng yêu cầu cho phép trong một khoảng thời gian (Rate Limit) |
 | **`500 Internal Server Error`** | Server Error | Lỗi hệ thống bất ngờ phía server |
 
 ### 2.2. Chuẩn cấu trúc Response lỗi (Consistent Error Response)
@@ -40,7 +41,7 @@ Mọi phản hồi lỗi từ API **bắt buộc** tuân thủ đúng cấu trú
 ```json
 {
   "message": "Mô tả chi tiết lỗi dành cho người dùng",
-  "error": "Tên loại lỗi (Bad Request, Unauthorized, Forbidden, Conflict, Internal Server Error,...)",
+  "error": "Tên loại lỗi (Bad Request, Unauthorized, Forbidden, Conflict, Too Many Requests, Internal Server Error,...)",
   "statusCode": 401
 }
 ```
@@ -59,15 +60,19 @@ Mọi phản hồi lỗi từ API **bắt buộc** tuân thủ đúng cấu trú
    - Độ dài: từ 2 đến 50 ký tự. Không được rỗng.
 2. **`email`**:
    - Bắt buộc.
-   - Định dạng email tiêu chuẩn (RFC 5322).
+   - Định dạng email tiêu chuẩn RFC 5322 (kiểm chứng bằng thư viện chuyên dụng `validator.js`).
    - Được chuẩn hóa tự động: chuyển toàn bộ về chữ thường (`lowercase`) và cắt khoảng trắng (`trimmed`).
 3. **`password`**:
    - Bắt buộc.
+   - Bắt buộc là chuỗi ký tự (`string`).
    - Độ dài: từ 8 đến 128 ký tự.
+   - Không được chỉ chứa toàn bộ ký tự khoảng trắng (whitespace-only).
+   - Cho phép khoảng trắng ở giữa, đầu và cuối mật khẩu (hệ thống không tự động `trim()` trước khi băm hoặc xác thực đăng nhập).
    - Được băm bằng thuật toán `bcrypt` với cost factor (salt rounds) tối thiểu là `12` trước khi lưu vào cơ sở dữ liệu.
 4. **`currentPassword` / `newPassword`**:
    - Bắt buộc khi đổi mật khẩu.
-   - `newPassword` phải tối thiểu 8 ký tự và phải khác `currentPassword`.
+   - `currentPassword`: Bắt buộc là chuỗi ký tự (`string`).
+   - `newPassword`: Bắt buộc là chuỗi ký tự (`string`), độ dài từ 8 đến 128 ký tự, không được chỉ chứa toàn bộ ký tự khoảng trắng, và phải khác `currentPassword`.
 
 ---
 
@@ -247,7 +252,7 @@ Mọi phản hồi lỗi từ API **bắt buộc** tuân thủ đúng cấu trú
 ```
 
 #### Response lỗi:
-- **`400 Bad Request`** (Mật khẩu mới không đủ độ dài hoặc trùng với mật khẩu cũ):
+- **`400 Bad Request`** (Dữ liệu không hợp lệ: thiếu trường, currentPassword sai kiểu dữ liệu, newPassword < 8 ký tự, newPassword chỉ chứa khoảng trắng, hoặc newPassword trùng với currentPassword):
   ```json
   {
     "message": "Mật khẩu mới không được trùng với mật khẩu hiện tại",
