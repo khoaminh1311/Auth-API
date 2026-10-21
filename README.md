@@ -32,9 +32,12 @@ Auth API cung cấp đầy đủ các tính năng xác thực và quản lý phi
 | **Cơ sở dữ liệu & ODM** | MongoDB Atlas, Mongoose | ^8.9.5 |
 | **Mã hóa mật khẩu** | Bcrypt | ^5.1.1 |
 | **Cấp phát & Xác thực Token** | JSON Web Token (`jsonwebtoken`) | ^9.0.2 |
-| **Bảo mật & Giới hạn tần suất** | Helmet, Express-Rate-Limit | ^8.0.0, ^7.5.0 |
-| **Kiểm tra dữ liệu đầu vào** | Validator | ^13.12.0 |
+| **Bảo mật tiêu đề HTTP** | Helmet | ^8.3.0 |
+| **Giới hạn tần suất (Rate Limiting)** | Express-Rate-Limit | ^8.7.1 |
+| **Kiểm tra dữ liệu đầu vào** | Validator | ^13.15.35 |
+| **Chia sẻ tài nguyên (CORS)** | Cors | ^2.8.5 |
 | **Quản lý biến môi trường** | Dotenv | ^16.4.7 |
+| **Công cụ phát triển (Dev)** | Nodemon | ^3.1.9 |
 
 ---
 
@@ -70,7 +73,7 @@ cp .env.example .env
 copy .env.example .env
 ```
 
-Mở file `.env` vừa tạo và điền các thông tin kết nối và bí mật của bạn:
+Mở file `.env` vừa tạo và điền các thông tin kết nối:
 ```env
 PORT=3000
 NODE_ENV=development
@@ -78,10 +81,13 @@ MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/auth_api
 JWT_SECRET=your_super_secret_jwt_key_at_least_32_characters_long
 JWT_EXPIRES_IN=1d
 BCRYPT_SALT_ROUNDS=12
-ADMIN_NAME=Admin User
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=AdminSecurePassword123!
 CORS_ORIGIN=*
+
+# Tùy chọn: Chỉ cần khi chạy script seed admin lần đầu
+ADMIN_NAME=
+ADMIN_EMAIL=
+ADMIN_PASSWORD=
+
 ```
 
 > [!TIP]
@@ -109,6 +115,23 @@ npm run seed:admin
 
 Sau khi khởi động thành công, server sẽ lắng nghe tại: `http://localhost:3000`.
 
+### Bước 6: Chạy kiểm thử tự động (Automated Testing & Smoke Test)
+- **Chạy toàn bộ 8 Test Suites (60 bài kiểm thử đơn vị, nghiệp vụ và tích hợp):**
+  ```bash
+  npm test
+  # hoặc: node tests/runner.js
+  ```
+- **Chạy kiểm thử riêng lẻ từng module:**
+  ```bash
+  node tests/env.test.js         # Kiểm tra cấu hình và biến môi trường
+  node tests/token.test.js       # Kiểm tra tiện ích ký & verify JWT
+  node tests/user.model.test.js  # Kiểm tra Schema Mongoose & băm Bcrypt
+  node tests/authService.test.js # Kiểm tra nghiệp vụ xác thực (Register, Login, Password)
+  node tests/rateLimit.test.js   # Kiểm tra giới hạn tần suất & HTTP 429
+  node tests/app.test.js         # Kiểm tra Express App, Helmet headers & 404
+  node tests/httpServer.test.js  # Kiểm tra vòng đời Server & Seed Admin
+  node tests/authBearer.test.js  # Kiểm tra E2E Endpoints & RBAC Admin
+  ```
 ---
 
 ## 5. Bảng giải thích chi tiết Biến Môi Trường (`.env`)
@@ -328,7 +351,3 @@ Nhằm đảm bảo bám sát đúng phạm vi yêu cầu (Spec) của dự án,
 - Không cung cấp API công khai để kích hoạt tài khoản qua Email OTP hoặc CRUD danh sách người dùng.
 
 ---
-
-## 10. Bản quyền & Giấy phép (License)
-
-Dự án được phát hành dưới giấy phép mã nguồn mở [ISC License](LICENSE). Mọi đóng góp và mã nguồn đều tuân thủ các quy tắc bảo mật và phát triển phần mềm chuẩn mực.
